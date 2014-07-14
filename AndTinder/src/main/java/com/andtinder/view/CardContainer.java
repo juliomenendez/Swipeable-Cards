@@ -30,7 +30,7 @@ import com.andtinder.model.Orientations.Orientation;
 
 import java.util.Random;
 
-public class CardContainer extends AdapterView<ListAdapter> {
+public class CardContainer extends AdapterView<ListAdapter> implements CardStackAdapter.OnItemAddRemoveListener {
 	public static final int INVALID_POINTER_ID = -1;
 	private int mActivePointerId = INVALID_POINTER_ID;
 	private static final double DISORDERED_MAX_ROTATION_RADIANS = Math.PI / 64;
@@ -39,8 +39,6 @@ public class CardContainer extends AdapterView<ListAdapter> {
 		@Override
 		public void onChanged() {
 			super.onChanged();
-			clearStack();
-			ensureFull();
 		}
 
 		@Override
@@ -59,7 +57,7 @@ public class CardContainer extends AdapterView<ListAdapter> {
 	private GestureDetector mGestureDetector;
 	private int mFlingSlop;
 	private Orientation mOrientation;
-	private ListAdapter mListAdapter;
+	private CardStackAdapter mListAdapter;
 	private float mLastTouchX;
 	private float mLastTouchY;
 	private View mTopCard;
@@ -71,6 +69,21 @@ public class CardContainer extends AdapterView<ListAdapter> {
     private OnCardDimissedListener mOnCardDimissedListener = null;
 
     private OnCardClickListener mOnCardClickListener = null;
+
+    @Override
+    public void onItemAdd(CardModel cardModel, int position) {
+        if (getChildCount() < mMaxVisible) {
+            View view = mListAdapter.getView(position, null, this);
+            appendToStack(view, mListAdapter.getItemViewType(position));
+        }
+    }
+
+    @Override
+    public void onItemRemove(CardModel cardModel, int position) {
+        if (getChildCount() < mMaxVisible) {
+            ensureFull();
+        }
+    }
 
     public interface OnCardDimissedListener {
         void onLike(CardModel cardModel);
@@ -149,29 +162,20 @@ public class CardContainer extends AdapterView<ListAdapter> {
 
 		clearStack();
 		mTopCard = null;
-		mListAdapter = adapter;
+		mListAdapter = (CardStackAdapter) adapter;
 		mNextAdapterPosition = 0;
 		adapter.registerDataSetObserver(mDataSetObserver);
+        mListAdapter.setItemAddRemoveListener(this);
 
 		ensureFull();
 
-        mNumberOfCards = getAdapter().getCount();
 		requestLayout();
 	}
 
 	private void ensureFull() {
 		while (mNextAdapterPosition < mListAdapter.getCount() && getChildCount() < mMaxVisible) {
 			View view = mListAdapter.getView(mNextAdapterPosition, null, this);
-			view.setLayerType(LAYER_TYPE_SOFTWARE, null);
-			if(mOrientation == Orientation.Disordered) {
-				view.setRotation(getDisorderedRotation());
-			}
-			addViewInLayout(view, 0, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT,
-					mListAdapter.getItemViewType(mNextAdapterPosition)), false);
-
-			requestLayout();
-
-			mNextAdapterPosition += 1;
+            appendToStack(view, mListAdapter.getItemViewType(mNextAdapterPosition));
 		}
 
         if (getChildCount() != 0) {
@@ -179,6 +183,19 @@ public class CardContainer extends AdapterView<ListAdapter> {
             mTopCard.setLayerType(LAYER_TYPE_HARDWARE, null);
         }
 	}
+
+    private void appendToStack(View view, int viewType) {
+        if (getChildCount() < mMaxVisible) {
+            view.setLayerType(LAYER_TYPE_SOFTWARE, null);
+            if (mOrientation == Orientation.Disordered) {
+                view.setRotation(getDisorderedRotation());
+            }
+            addViewInLayout(view, 0, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT,
+                    viewType), false);
+            mNextAdapterPosition += 1;
+            requestLayout();
+        }
+    }
 
 	private void clearStack() {
 		removeAllViewsInLayout();
@@ -467,6 +484,7 @@ public class CardContainer extends AdapterView<ListAdapter> {
 							@Override
 							public void onAnimationEnd(Animator animation) {
 								removeViewInLayout(topCard);
+                                mListAdapter.pop();
 								ensureFull();
 							}
 

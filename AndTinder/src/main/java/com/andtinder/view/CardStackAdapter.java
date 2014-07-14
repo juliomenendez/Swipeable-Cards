@@ -21,6 +21,8 @@ public abstract class CardStackAdapter extends BaseCardStackAdapter {
 	private final Object mLock = new Object();
 	private ArrayList<CardModel> mData;
 
+    private OnItemAddRemoveListener mItemAddRemoveListener = null;
+
 	public CardStackAdapter(Context context) {
 		mContext = context;
 		mData = new ArrayList<CardModel>();
@@ -77,14 +79,22 @@ public abstract class CardStackAdapter extends BaseCardStackAdapter {
 			mData.add(item);
 		}
 		notifyDataSetChanged();
+        if (mItemAddRemoveListener != null) {
+            mItemAddRemoveListener.onItemAdd(item, mData.size() - 1);
+        }
 	}
 
 	public CardModel pop() {
 		CardModel model;
+        int position;
 		synchronized (mLock) {
-			model = mData.remove(mData.size() - 1);
+            position = mData.size() - 1;
+			model = mData.remove(position);
 		}
 		notifyDataSetChanged();
+        if (mItemAddRemoveListener != null) {
+            mItemAddRemoveListener.onItemRemove(model, position);
+        }
 		return model;
 	}
 
@@ -112,4 +122,13 @@ public abstract class CardStackAdapter extends BaseCardStackAdapter {
 	public Context getContext() {
 		return mContext;
 	}
+
+    public void setItemAddRemoveListener(OnItemAddRemoveListener itemAddRemoveListener) {
+        mItemAddRemoveListener = itemAddRemoveListener;
+    }
+
+    public interface OnItemAddRemoveListener {
+        void onItemAdd(CardModel cardModel, int position);
+        void onItemRemove(CardModel cardModel, int position);
+    }
 }
