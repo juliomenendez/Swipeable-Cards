@@ -54,8 +54,7 @@ public class CardContainer extends AdapterView<ListAdapter> {
 	private final Rect childRect = new Rect();
 	private final Matrix mMatrix = new Matrix();
 
-
-	//TODO: determine max dynamically based on device speed
+    //TODO: determine max dynamically based on device speed
 	private int mMaxVisible = 10;
 	private GestureDetector mGestureDetector;
 	private int mFlingSlop;
@@ -88,6 +87,14 @@ public class CardContainer extends AdapterView<ListAdapter> {
 
     public void setOnCardClickListener( OnCardClickListener listener ) {
         mOnCardClickListener = listener;
+    }
+
+    public int getMaxVisible() {
+        return mMaxVisible;
+    }
+
+    public void setMaxVisible(int maxVisible) {
+        mMaxVisible = maxVisible;
     }
 
 	public CardContainer(Context context) {
