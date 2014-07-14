@@ -321,6 +321,16 @@ public class CardContainer extends AdapterView<ListAdapter> {
 				mLastTouchY = y;
 				break;
 			case MotionEvent.ACTION_UP:
+                if (!mDragging) {
+                    CardModel cardModel = (CardModel) getAdapter().getItem(0);
+
+                    if (cardModel.getOnClickListener() != null) {
+                        cardModel.getOnClickListener().OnClickListener();
+                    }
+                    if (mOnCardClickListener != null) {
+                        mOnCardClickListener.onClick(cardModel);
+                    }
+                }
 			case MotionEvent.ACTION_CANCEL:
 				if (!mDragging) {
 					return true;
@@ -354,56 +364,7 @@ public class CardContainer extends AdapterView<ListAdapter> {
 		return true;
 	}
 
-	@Override
-	public boolean onInterceptTouchEvent(MotionEvent event) {
-		if (mTopCard == null) {
-			return false;
-		}
-		if (mGestureDetector.onTouchEvent(event)) {
-			return true;
-		}
-		final int pointerIndex;
-		final float x, y;
-		final float dx, dy;
-		switch (event.getActionMasked()) {
-			case MotionEvent.ACTION_DOWN:
-				mTopCard.getHitRect(childRect);
-
-                CardModel cardModel = (CardModel)getAdapter().getItem(0);
-
-                if (cardModel.getOnClickListener() != null) {
-                   cardModel.getOnClickListener().OnClickListener();
-                }
-				pointerIndex = event.getActionIndex();
-				x = event.getX(pointerIndex);
-				y = event.getY(pointerIndex);
-
-				if (!childRect.contains((int) x, (int) y)) {
-					return false;
-				}
-
-				mLastTouchX = x;
-				mLastTouchY = y;
-				mActivePointerId = event.getPointerId(pointerIndex);
-				break;
-			case MotionEvent.ACTION_MOVE:
-				pointerIndex = event.findPointerIndex(mActivePointerId);
-				x = event.getX(pointerIndex);
-				y = event.getY(pointerIndex);
-				if (Math.abs(x - mLastTouchX) > mTouchSlop || Math.abs(y - mLastTouchY) > mTouchSlop) {
-					float[] points = new float[]{x - mTopCard.getLeft(), y - mTopCard.getTop()};
-					mTopCard.getMatrix().invert(mMatrix);
-					mMatrix.mapPoints(points);
-					mTopCard.setPivotX(points[0]);
-					mTopCard.setPivotY(points[1]);
-					return true;
-				}
-		}
-
-		return false;
-	}
-
-	@Override
+    @Override
 	public View getSelectedView() {
 		throw new UnsupportedOperationException();
 	}
