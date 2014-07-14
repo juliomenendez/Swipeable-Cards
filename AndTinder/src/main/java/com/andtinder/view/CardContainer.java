@@ -148,10 +148,6 @@ public class CardContainer extends AdapterView<ListAdapter> {
 
 		ensureFull();
 
-		if (getChildCount() != 0) {
-			mTopCard = getChildAt(getChildCount() - 1);
-			mTopCard.setLayerType(LAYER_TYPE_HARDWARE, null);
-		}
         mNumberOfCards = getAdapter().getCount();
 		requestLayout();
 	}
@@ -170,6 +166,11 @@ public class CardContainer extends AdapterView<ListAdapter> {
 
 			mNextAdapterPosition += 1;
 		}
+
+        if (getChildCount() != 0) {
+            mTopCard = getChildAt(getChildCount() - 1);
+            mTopCard.setLayerType(LAYER_TYPE_HARDWARE, null);
+        }
 	}
 
 	private void clearStack() {
