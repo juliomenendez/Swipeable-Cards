@@ -69,6 +69,27 @@ public class CardContainer extends AdapterView<ListAdapter> {
 	private int mNextAdapterPosition;
 	private boolean mDragging;
 
+    private OnCardDimissedListener mOnCardDimissedListener = null;
+
+    private OnCardClickListener mOnCardClickListener = null;
+
+    public interface OnCardDimissedListener {
+        void onLike(CardModel cardModel);
+        void onDislike(CardModel cardModel);
+    }
+
+    public interface OnCardClickListener {
+        void onClick(CardModel cardModel);
+    }
+
+    public void setOnCardDimissedListener( OnCardDimissedListener listener ) {
+        mOnCardDimissedListener = listener;
+    }
+
+    public void setOnCardClickListener( OnCardClickListener listener ) {
+        mOnCardClickListener = listener;
+    }
+
 	public CardContainer(Context context) {
 		super(context);
 
@@ -456,6 +477,14 @@ public class CardContainer extends AdapterView<ListAdapter> {
                         cardModel.getOnCardDimissedListener().onDislike();
                     } else {
                         cardModel.getOnCardDimissedListener().onLike();
+                    }
+                }
+
+                if (mOnCardDimissedListener != null) {
+                    if (targetX > 0) {
+                        mOnCardDimissedListener.onDislike(cardModel);
+                    } else {
+                        mOnCardDimissedListener.onLike(cardModel);
                     }
                 }
 
