@@ -39,6 +39,7 @@ public class CardContainer extends AdapterView<ListAdapter> implements CardStack
 		@Override
 		public void onChanged() {
 			super.onChanged();
+            ensureFull();
 		}
 
 		@Override
@@ -65,6 +66,7 @@ public class CardContainer extends AdapterView<ListAdapter> implements CardStack
 	private int mGravity;
 	private int mNextAdapterPosition;
 	private boolean mDragging;
+    private int mLastListSize = -1;
 
     private OnCardDimissedListener mOnCardDimissedListener = null;
 
@@ -80,9 +82,6 @@ public class CardContainer extends AdapterView<ListAdapter> implements CardStack
 
     @Override
     public void onItemRemove(CardModel cardModel, int position) {
-        if (getChildCount() < mMaxVisible) {
-            ensureFull();
-        }
     }
 
     public interface OnCardDimissedListener {
@@ -173,7 +172,13 @@ public class CardContainer extends AdapterView<ListAdapter> implements CardStack
 	}
 
 	private void ensureFull() {
-		while (mNextAdapterPosition < mListAdapter.getCount() && getChildCount() < mMaxVisible) {
+        int listSize = mListAdapter.getCount();
+        if (mLastListSize != -1 && mLastListSize > listSize) {
+            mNextAdapterPosition = mNextAdapterPosition - Math.abs(mLastListSize - listSize);
+        }
+        mLastListSize = listSize;
+
+		while (mNextAdapterPosition < listSize && getChildCount() < mMaxVisible) {
 			View view = mListAdapter.getView(mNextAdapterPosition, null, this);
             appendToStack(view, mListAdapter.getItemViewType(mNextAdapterPosition));
 		}
@@ -485,7 +490,6 @@ public class CardContainer extends AdapterView<ListAdapter> implements CardStack
 							public void onAnimationEnd(Animator animation) {
 								removeViewInLayout(topCard);
                                 mListAdapter.pop();
-								ensureFull();
 							}
 
 							@Override
