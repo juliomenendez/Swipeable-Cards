@@ -437,69 +437,87 @@ public class CardContainer extends AdapterView<ListAdapter> implements CardStack
 		@Override
 		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 			Log.d("Fling", "Fling with " + velocityX + ", " + velocityY);
-			final View topCard = mTopCard;
-			float dx = e2.getX() - e1.getX();
-			if (Math.abs(dx) > mTouchSlop &&
-					Math.abs(velocityX) > Math.abs(velocityY) &&
-					Math.abs(velocityX) > mFlingSlop * 3) {
-				float targetX = topCard.getX();
-				float targetY = topCard.getY();
-				long duration = 0;
-
-				boundsRect.set(0 - topCard.getWidth() - 100, 0 - topCard.getHeight() - 100, getWidth() + 100, getHeight() + 100);
-
-				while (boundsRect.contains((int) targetX, (int) targetY)) {
-					targetX += velocityX / 10;
-					targetY += velocityY / 10;
-					duration += 100;
-				}
-
-				duration = Math.min(500, duration);
-
-				mTopCard = getChildAt(getChildCount() - 2);
-                CardModel cardModel = (CardModel)getAdapter().getItem(0);
-
-				if(mTopCard != null)
-					mTopCard.setLayerType(LAYER_TYPE_HARDWARE, null);
-
-                if (cardModel.getOnCardDimissedListener() != null) {
-                    if ( targetX > 0 ) {
-                        cardModel.getOnCardDimissedListener().onDislike();
-                    } else {
-                        cardModel.getOnCardDimissedListener().onLike();
-                    }
-                }
-
-                if (mOnCardDimissedListener != null) {
-                    if (targetX > 0) {
-                        mOnCardDimissedListener.onDislike(cardModel);
-                    } else {
-                        mOnCardDimissedListener.onLike(cardModel);
-                    }
-                }
-
-				topCard.animate()
-						.setDuration(duration)
-						.alpha(.75f)
-						.setInterpolator(new LinearInterpolator())
-						.x(targetX)
-						.y(targetY)
-						.rotation(Math.copySign(45, velocityX))
-						.setListener(new AnimatorListenerAdapter() {
-							@Override
-							public void onAnimationEnd(Animator animation) {
-								removeViewInLayout(topCard);
-                                mListAdapter.pop();
-							}
-
-							@Override
-							public void onAnimationCancel(Animator animation) {
-								onAnimationEnd(animation);
-							}
-						});
-				return true;
-			} else
-				return false;
+            return animateTopCard(e1.getX(), e2.getX(), velocityX, velocityY, true);
 		}
 	}
+
+    public void performLikeAction() {
+        animateTopCard(0 - mTopCard.getX() - 100, 0, -600, 100, false);
+    }
+
+    public void performDislikeAction() {
+        animateTopCard(getWidth() + mTopCard.getX() , 0, 600, 100, false);
+    }
+
+    private boolean animateTopCard(float x1, float x2, float velocityX, float velocityY, boolean isFlingEvent) {
+        final View topCard = mTopCard;
+        float dx = x2 - x1;
+        if (Math.abs(dx) > mTouchSlop &&
+                Math.abs(velocityX) > Math.abs(velocityY) &&
+                Math.abs(velocityX) > mFlingSlop * 3) {
+            float targetX;
+            if (isFlingEvent) {
+                targetX = topCard.getX();
+            } else {
+                targetX = x1;
+            }
+            float targetY = topCard.getY();
+            long duration = 0;
+
+            boundsRect.set(0 - topCard.getWidth() - 100, 0 - topCard.getHeight() - 100, getWidth() + 100, getHeight() + 100);
+
+            while (boundsRect.contains((int) targetX, (int) targetY)) {
+                targetX += velocityX / 10;
+                targetY += velocityY / 10;
+                duration += 100;
+            }
+
+            duration = Math.min(500, duration);
+
+            mTopCard = getChildAt(getChildCount() - 2);
+            CardModel cardModel = (CardModel)getAdapter().getItem(0);
+
+            if(mTopCard != null)
+                mTopCard.setLayerType(LAYER_TYPE_HARDWARE, null);
+
+            if (cardModel.getOnCardDimissedListener() != null) {
+                if ( targetX > 0 ) {
+                    cardModel.getOnCardDimissedListener().onDislike();
+                } else {
+                    cardModel.getOnCardDimissedListener().onLike();
+                }
+            }
+
+            if (mOnCardDimissedListener != null) {
+                if (targetX > 0) {
+                    mOnCardDimissedListener.onDislike(cardModel);
+                } else {
+                    mOnCardDimissedListener.onLike(cardModel);
+                }
+            }
+
+            topCard.animate()
+                    .setDuration(duration)
+                    .alpha(.75f)
+                    .setInterpolator(new LinearInterpolator())
+                    .x(targetX)
+                    .y(targetY)
+                    .rotation(Math.copySign(45, velocityX))
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            removeViewInLayout(topCard);
+                            mListAdapter.pop();
+                        }
+
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+                            onAnimationEnd(animation);
+                        }
+                    });
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
