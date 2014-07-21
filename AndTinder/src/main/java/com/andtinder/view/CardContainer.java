@@ -482,17 +482,17 @@ public class CardContainer extends AdapterView<ListAdapter> implements CardStack
 
             if (cardModel.getOnCardDimissedListener() != null) {
                 if ( targetX > 0 ) {
-                    cardModel.getOnCardDimissedListener().onDislike();
-                } else {
                     cardModel.getOnCardDimissedListener().onLike();
+                } else {
+                    cardModel.getOnCardDimissedListener().onDislike();
                 }
             }
 
             if (mOnCardDimissedListener != null) {
                 if (targetX > 0) {
-                    mOnCardDimissedListener.onDislike(cardModel);
-                } else {
                     mOnCardDimissedListener.onLike(cardModel);
+                } else {
+                    mOnCardDimissedListener.onDislike(cardModel);
                 }
             }
 
